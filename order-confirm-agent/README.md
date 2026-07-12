@@ -15,8 +15,8 @@ speech, and the order changes are all **real**.
 
 ```bash
 cd order-confirm-agent
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Then open **http://localhost:3000** → **Simulate a call** → **start call**.
