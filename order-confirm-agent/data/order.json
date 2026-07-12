@@ -1,0 +1,23 @@
+{
+  "id": "ORD-4417",
+  "lines": [
+    { 
+      "lineId": "L1", 
+      "sku": "PJ-XL", 
+      "quantity": 2 
+    },
+    { 
+      "lineId": "L2", 
+      "sku": "GR-XL", 
+      "quantity": 3
+    }
+  ],
+  "payment": "cod",
+  "courier": "Pathao",
+  "status": "pending",
+  "riskFlags": ["first_time_buyer"],
+  "history": [
+    { "who": "system", "text": "Order placed from Facebook page" },
+    { "who": "agent", "text": "SMS sent, no reply after 2h" }
+  ]
+}

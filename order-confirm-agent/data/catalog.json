@@ -1,0 +1,8 @@
+[
+  { "sku": "PJ-XL", "name": "Cotton Panjabi (XL)", "price": 1290 },
+  { "sku": "PJ-L", "name": "Cotton Panjabi (L)", "price": 1290 },
+  { "sku": "GR-XL", "name": "Cotton T-Shirt (XL)", "price": 1290 },
+  { "sku": "SR-30", "name": "Skin Serum 30ml", "price": 1400 },
+  { "sku": "FW-100", "name": "Face Wash 100ml", "price": 650 },
+  { "sku": "EB-01", "name": "Bluetooth Earbuds", "price": 2100 }
+]

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.next/
+.turbo/
+*.tsbuildinfo
+.env
+.env.local
+spikes/out/
+drizzle/meta/_journal_local*

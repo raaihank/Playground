@@ -1,0 +1,627 @@
+:root {
+  --bg: #0b0e14;
+  --panel: #121722;
+  --panel-2: #0e131c;
+  --border: #232b3a;
+  --border-soft: #1a2130;
+  --text: #dbe3f0;
+  --muted: #7c89a0;
+  --muted-2: #566178;
+  --accent: #35d0a5;
+  --accent-dim: #1c6b57;
+  --amber: #e0a44a;
+  --red: #e2685f;
+  --blue: #5b9bd5;
+  --flash: #2a6b58;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ── Layout primitives ──────────────────────────────────────────────── */
+.wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.brand {
+  font-family: var(--mono);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.brand .dot {
+  color: var(--accent);
+}
+
+.navlink {
+  color: var(--muted);
+  font-size: 13px;
+  margin-left: 16px;
+}
+.navlink:hover {
+  color: var(--text);
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.btn {
+  background: #1a2231;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 14px;
+  transition: background 0.12s, border-color 0.12s;
+}
+.btn:hover {
+  background: #222c3e;
+  border-color: #33405a;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: #eafff8;
+}
+.btn-primary:hover {
+  background: #217a63;
+}
+.btn-danger {
+  background: #3a1f1f;
+  border-color: #6e3a37;
+  color: #f3c4c0;
+}
+.btn-danger:hover {
+  background: #4a2724;
+}
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border-soft);
+  color: var(--muted);
+}
+.btn-ghost:hover {
+  color: var(--text);
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 14px;
+  width: 100%;
+}
+textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent-dim);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.pill .glyph {
+  font-size: 9px;
+}
+.pill-pending {
+  border-color: #4a4230;
+  color: var(--amber);
+}
+.pill-confirmed {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+.pill-cancelled {
+  border-color: #6e3a37;
+  color: var(--red);
+}
+.pill-needs_human,
+.pill-awaiting_prepayment {
+  border-color: #35507a;
+  color: var(--blue);
+}
+
+.rule-tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  border: 1px solid var(--accent-dim);
+  border-radius: 4px;
+  padding: 0 5px;
+  margin-right: 4px;
+  cursor: help;
+}
+.tool-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--amber);
+  border: 1px solid #4a4230;
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-right: 4px;
+}
+
+.muted {
+  color: var(--muted);
+}
+.mono {
+  font-family: var(--mono);
+}
+
+/* ── Home ───────────────────────────────────────────────────────────── */
+.home {
+  max-width: 640px;
+  margin: 12vh auto 0;
+  text-align: center;
+  padding: 100px;
+}
+.home h1 {
+  font-family: var(--mono);
+  font-size: 28px;
+  margin: 0 0 8px;
+}
+.home p {
+  color: var(--muted);
+  margin: 0 0 32px;
+}
+.home .cta {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+}
+.home .cta .btn {
+  padding: 14px 26px;
+  font-size: 15px;
+}
+
+/* ── Setup ──────────────────────────────────────────────────────────── */
+.setup-grid {
+  display: grid;
+  gap: 20px;
+}
+.field-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.rule-row {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 10px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: var(--panel-2);
+  margin-bottom: 10px;
+}
+.rule-id {
+  font-family: var(--mono);
+  color: var(--accent);
+  padding-top: 9px;
+  font-size: 13px;
+}
+.rule-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.saved-flash {
+  color: var(--accent);
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.saved-flash.show {
+  opacity: 1;
+}
+
+/* ── Simulate console ───────────────────────────────────────────────── */
+.console {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .console {
+    grid-template-columns: 1fr;
+  }
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+}
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--muted-2);
+}
+.status-live .status-dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(53, 208, 165, 0.15);
+}
+.status-thinking .status-dot,
+.status-speaking .status-dot {
+  background: var(--amber);
+}
+.status-label {
+  font-family: var(--mono);
+  font-size: 13px;
+  text-transform: capitalize;
+}
+.timer {
+  margin-left: auto;
+  font-family: var(--mono);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.waveform-box {
+  padding: 0 16px 12px;
+}
+canvas.waveform {
+  width: 100%;
+  height: 72px;
+  display: block;
+  background: var(--panel-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+}
+.wave-caption {
+  font-size: 11px;
+  color: var(--muted-2);
+  margin-top: 6px;
+  font-family: var(--mono);
+}
+
+.talk-row {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-soft);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ptt {
+  flex: 0 0 auto;
+  user-select: none;
+  background: #1a2231;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 11px 18px;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.ptt.recording {
+  background: #3a1f1f;
+  border-color: var(--red);
+  color: #f3c4c0;
+}
+.text-input-row {
+  display: flex;
+  gap: 8px;
+  flex: 1 1 240px;
+}
+
+.transcript {
+  padding: 8px 16px 16px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.turn {
+  margin: 12px 0;
+}
+.turn .who {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-2);
+  margin-bottom: 2px;
+}
+.turn.agent .who {
+  color: var(--accent);
+}
+.turn.you .who {
+  color: var(--blue);
+}
+.turn .text {
+  color: var(--text);
+}
+.turn .meta {
+  margin-top: 4px;
+}
+
+/* ── Order / customer panels ────────────────────────────────────────── */
+.kv {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.kv:last-child {
+  border-bottom: none;
+}
+.kv .k {
+  color: var(--muted);
+}
+.kv .v {
+  font-family: var(--mono);
+}
+.line-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  align-items: center;
+}
+.line-item .li-qty {
+  font-family: var(--mono);
+  color: var(--muted);
+}
+.line-item .li-price {
+  font-family: var(--mono);
+}
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  font-size: 16px;
+  border-top: 1px solid var(--border);
+}
+.total-row .v {
+  font-family: var(--mono);
+  font-weight: 600;
+}
+
+/* ── Change animation ─────────────────────────────────────────────────
+   When the agent (or the operator) edits a field mid-call, the row must be
+   impossible to miss: a bright green fill snaps in, a thick accent bar grows
+   on the left, an outer glow rings the row, it nudges sideways, then it all
+   eases back over ~1.5s. The changed VALUE inside also pops and scales.
+   (Page clears the .flash class after 1600ms to match the animation length.) */
+@keyframes flashpop {
+  0% {
+    background: rgba(53, 208, 165, 0.5);
+    box-shadow:
+      inset 4px 0 0 0 var(--accent),
+      0 0 0 1px rgba(53, 208, 165, 0.55),
+      0 0 22px 2px rgba(53, 208, 165, 0.4);
+    transform: translateX(4px);
+  }
+  18% {
+    background: rgba(53, 208, 165, 0.5);
+    box-shadow:
+      inset 4px 0 0 0 var(--accent),
+      0 0 0 1px rgba(53, 208, 165, 0.55),
+      0 0 22px 2px rgba(53, 208, 165, 0.4);
+    transform: translateX(0);
+  }
+  100% {
+    background: transparent;
+    box-shadow:
+      inset 0 0 0 0 var(--accent),
+      0 0 0 0 rgba(53, 208, 165, 0),
+      0 0 0 0 rgba(53, 208, 165, 0);
+    transform: translateX(0);
+  }
+}
+@keyframes valuepop {
+  0% {
+    color: var(--accent);
+    transform: scale(1.28);
+  }
+  55% {
+    color: var(--accent);
+    transform: scale(1);
+  }
+  100% {
+    color: inherit;
+    transform: scale(1);
+  }
+}
+.flash {
+  position: relative;
+  z-index: 1;
+  border-radius: 6px;
+  animation: flashpop 1.5s cubic-bezier(0.18, 0.85, 0.25, 1);
+}
+/* Make the actual changed value snap in too. */
+.flash .li-price,
+.flash .li-qty,
+.flash .v,
+.flash .cf-value {
+  display: inline-block;
+  transform-origin: left center;
+  animation: valuepop 1.5s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .flash,
+  .flash .li-price,
+  .flash .li-qty,
+  .flash .v,
+  .flash .cf-value {
+    animation-duration: 0.01ms;
+    transform: none;
+  }
+}
+
+.cust-field {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.cust-field .cf-label {
+  font-size: 11px;
+  color: var(--muted-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.cust-field .cf-value {
+  font-family: var(--mono);
+}
+
+.changelog {
+  padding: 6px 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+/* New change-log rows slide in from the top with a green tint, so a freshly
+   logged mutation reads as "just happened". */
+@keyframes rowin {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+    background: rgba(53, 208, 165, 0.22);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    background: transparent;
+  }
+}
+.change-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 13px;
+  animation: rowin 0.55s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .change-row {
+    animation-duration: 0.01ms;
+  }
+}
+.change-row .ct-time {
+  font-family: var(--mono);
+  color: var(--muted-2);
+  font-size: 12px;
+}
+.change-row .ct-desc {
+  font-family: var(--mono);
+}
+.change-row .ct-desc .arrow {
+  color: var(--muted);
+}
+.change-row.reverted {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+.change-row.revert-entry {
+  color: var(--blue);
+}
+
+.empty {
+  padding: 18px 16px;
+  color: var(--muted-2);
+  font-size: 13px;
+}
+
+.errbar {
+  background: #3a1f1f;
+  border: 1px solid #6e3a37;
+  color: #f3c4c0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+.hint {
+  color: var(--muted-2);
+  font-size: 12px;
+  margin-top: 6px;
+}

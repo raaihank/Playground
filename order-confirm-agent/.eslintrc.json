@@ -1,0 +1,28 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@anthropic-ai/sdk",
+            "message": "Import vendor SDKs only inside src/lib/providers. Everything else must go through the provider modules."
+          },
+          {
+            "name": "@elevenlabs/elevenlabs-js",
+            "message": "Import vendor SDKs only inside src/lib/providers. Everything else must go through the provider modules."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/lib/providers/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ]
+}
