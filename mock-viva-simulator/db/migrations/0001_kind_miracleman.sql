@@ -1,0 +1,1 @@
+ALTER TABLE "sessions" ALTER COLUMN "time_limit_seconds" SET DEFAULT 900;

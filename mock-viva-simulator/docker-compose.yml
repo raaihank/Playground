@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16
+    container_name: bcs-viva-db
+    environment:
+      POSTGRES_USER: bcs
+      POSTGRES_PASSWORD: bcs
+      POSTGRES_DB: bcs_viva
+    ports:
+      - "5432:5432"
+    volumes:
+      - bcs_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bcs -d bcs_viva"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  bcs_pgdata:
