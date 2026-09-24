@@ -30,7 +30,7 @@
     margin: 0; background: var(--bg); color: var(--fg);
     font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
   }
-  main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; }
+  main { max-width: 1600px; margin: 0 auto; padding: 24px 16px 64px; }
   header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; margin-bottom: 20px; }
   h1 { font-size: 22px; margin: 0; }
   .sub { color: var(--muted); margin: 2px 0 0; }
@@ -49,18 +49,19 @@
 
   .grid-cards { display: grid; gap: 16px; }
   .card { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; min-width: 0; }
-  .card-head { display: flex; justify-content: space-between; align-items: start; gap: 8px; margin-bottom: 10px; }
+  .card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .title-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; min-width: 0; }
   h2 { font-size: 15px; margin: 0; }
   .model-id { color: var(--muted); font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
   .card-actions { display: flex; gap: 6px; }
-  .progress { font-size: 12px; color: var(--muted); margin-bottom: 8px; min-height: 18px; }
+  .progress { font-size: 12px; color: var(--muted); }
   .progress .live { color: var(--accent); }
   .progress .bad { color: var(--fn); }
 
   /* Every graph is the same full-width rectangle; --cols/--rows are set from JS so cells divide evenly. */
   .graph { display: grid; grid-auto-flow: column; grid-template-columns: repeat(var(--cols, 50), minmax(0, 1fr));
-           grid-template-rows: repeat(var(--rows, 2), auto); gap: 3px; padding: 2px; }
-  .cell { aspect-ratio: 1; border-radius: 3px; background: var(--empty);
+           grid-template-rows: repeat(var(--rows, 2), auto); gap: 2px; padding: 2px; }
+  .cell { aspect-ratio: 1; border-radius: 2px; background: var(--empty);
           outline: 1px solid rgba(27,31,36,.06); outline-offset: -1px; cursor: pointer; }
   .cell.err { background: repeating-linear-gradient(45deg, var(--err) 0 2px, transparent 2px 5px); }
   .cell.sel { outline: 2px solid var(--fg); outline-offset: 0; }
@@ -118,7 +119,7 @@
   <section class="grid-cards">
     <article class="card">
       <div class="card-head">
-        <div><h2>Ground truth</h2><div class="model-id" id="truthCounts"></div></div>
+        <div class="title-line"><h2>Ground truth</h2><span class="model-id" id="truthCounts"></span></div>
       </div>
       <div class="graph" id="graph-truth"></div>
       <div class="legend">
@@ -149,13 +150,14 @@ async function init() {
   $("#cards").innerHTML = Object.entries(S.models).map(([k, m]) => `
     <article class="card" id="card-${k}">
       <div class="card-head">
-        <div><h2>${esc(m.label)}</h2><div class="model-id">${esc(m.model)}</div></div>
+        <div class="title-line">
+          <h2>${esc(m.label)}</h2><span class="model-id">${esc(m.model)}</span><span class="progress" id="prog-${k}"></span>
+        </div>
         <div class="card-actions">
           <button data-run="${k}">Run</button>
           <button data-rerun="${k}" title="Clear cached results and call the API again for every sample">Rerun</button>
         </div>
       </div>
-      <div class="progress" id="prog-${k}"></div>
       <div class="graph" id="graph-${k}"></div>
       <div class="legend" id="legend-${k}"></div>
       <div class="stats" id="stats-${k}"></div>
@@ -169,12 +171,12 @@ async function init() {
 // Pick a column count that divides the sample count evenly (so every graph is a full rectangle),
 // preferring the longest strip whose squares stay a readable size.
 function layoutGraphs() {
-  const n = S.rows.length, gap = 3, w = $("#graph-truth").clientWidth - 4;
+  const n = S.rows.length, gap = 2, w = $("#graph-truth").clientWidth - 4;
   const cellAt = cols => (w - (cols - 1) * gap) / cols;
   const divisors = [...Array(n).keys()].map(i => i + 1).filter(c => n % c === 0);
-  const fits = divisors.filter(c => cellAt(c) >= 12 && cellAt(c) <= 28);
+  const fits = divisors.filter(c => cellAt(c) >= 7 && cellAt(c) <= 13);
   const cols = fits.length ? Math.max(...fits)
-    : divisors.reduce((best, c) => Math.abs(cellAt(c) - 18) < Math.abs(cellAt(best) - 18) ? c : best);
+    : divisors.reduce((best, c) => Math.abs(cellAt(c) - 10) < Math.abs(cellAt(best) - 10) ? c : best);
   const rows = Math.ceil(n / cols);
   document.querySelectorAll(".graph").forEach(g => { g.style.setProperty("--cols", cols); g.style.setProperty("--rows", rows); });
 }
