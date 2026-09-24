@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jev vs OpenAI</title>
+<style>
+  :root {
+    --bg: #ffffff; --panel: #f6f8fa; --border: #d0d7de; --fg: #1f2328; --muted: #59636e;
+    --accent: #0969da;
+    --empty: #ebedf0;
+    --g1: #9be9a8; --g2: #40c463; --g3: #30a14e; --g4: #216e39;
+    --tp: #216e39; --tn: #7bd88f; --fp: #d29922; --fn: #cf222e;
+    --truth-atk: #0969da; --truth-ben: #b6d7fb;
+    --err: #8c959f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117; --panel: #151b23; --border: #30363d; --fg: #e6edf3; --muted: #9198a1;
+      --accent: #4493f8;
+      --empty: #212830;
+      --g1: #0e4429; --g2: #006d32; --g3: #26a641; --g4: #39d353;
+      --tp: #39d353; --tn: #006d32; --fp: #d29922; --fn: #f85149;
+      --truth-atk: #4493f8; --truth-ben: #1b3a5e;
+      --err: #6e7681;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; margin-bottom: 20px; }
+  h1 { font-size: 22px; margin: 0; }
+  .sub { color: var(--muted); margin: 2px 0 0; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button {
+    font: inherit; font-size: 13px; font-weight: 500; color: var(--fg); background: var(--panel);
+    border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; cursor: pointer;
+  }
+  button:hover:not(:disabled) { border-color: var(--muted); }
+  button:disabled { opacity: .5; cursor: default; }
+  button.primary { background: #1f883d; border-color: #1f883d; color: #fff; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; background: transparent; }
+  .seg button + button { border-left: 1px solid var(--border); }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+
+  .grid-cards { display: grid; gap: 16px; }
+  .card { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; min-width: 0; }
+  .card-head { display: flex; justify-content: space-between; align-items: start; gap: 8px; margin-bottom: 10px; }
+  h2 { font-size: 15px; margin: 0; }
+  .model-id { color: var(--muted); font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .card-actions { display: flex; gap: 6px; }
+  .progress { font-size: 12px; color: var(--muted); margin-bottom: 8px; min-height: 18px; }
+  .progress .live { color: var(--accent); }
+  .progress .bad { color: var(--fn); }
+
+  /* Every graph is the same full-width rectangle; --cols/--rows are set from JS so cells divide evenly. */
+  .graph { display: grid; grid-auto-flow: column; grid-template-columns: repeat(var(--cols, 50), minmax(0, 1fr));
+           grid-template-rows: repeat(var(--rows, 2), auto); gap: 3px; padding: 2px; }
+  .cell { aspect-ratio: 1; border-radius: 3px; background: var(--empty);
+          outline: 1px solid rgba(27,31,36,.06); outline-offset: -1px; cursor: pointer; }
+  .cell.err { background: repeating-linear-gradient(45deg, var(--err) 0 2px, transparent 2px 5px); }
+  .cell.sel { outline: 2px solid var(--fg); outline-offset: 0; }
+  .cell.pending-live { animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .45; } }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; font-size: 12px; color: var(--muted); margin-top: 10px; }
+  .legend .sw { display: inline-block; width: 11px; height: 11px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+  .legend .ramp { display: inline-flex; gap: 3px; margin: 0 4px; }
+
+  .stats { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; margin-top: 14px; }
+  .stat { background: var(--panel); border-radius: 6px; padding: 6px 8px; min-width: 0; }
+  .stat .k { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat .v { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .stat.best .v::after { content: "★"; font-size: 11px; color: var(--fp); margin-left: 4px; vertical-align: 3px; }
+  .confusion { font-size: 12px; color: var(--muted); margin-top: 8px; font-variant-numeric: tabular-nums; }
+
+  .detail { margin-top: 16px; border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .detail .empty { color: var(--muted); }
+  .detail-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 8px; }
+  .pill { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 1px 9px; border: 1px solid var(--border); }
+  .pill.atk { color: var(--fn); border-color: var(--fn); }
+  .pill.ok { color: var(--g3); border-color: var(--g3); }
+  .verdicts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin: 10px 0; }
+  .verdict { background: var(--panel); border-radius: 6px; padding: 8px 10px; font-size: 13px; }
+  .verdict b { display: block; }
+  .text { white-space: pre-wrap; max-height: 260px; overflow: auto; font-size: 13px; background: var(--panel);
+          border-radius: 6px; padding: 10px 12px; margin: 0; }
+
+  #tip { position: fixed; pointer-events: none; z-index: 10; background: #1f2328; color: #fff; font-size: 12px;
+         border-radius: 6px; padding: 6px 9px; max-width: 320px; opacity: 0; transition: opacity .08s; }
+  #tip.on { opacity: 1; }
+  #tip .snip { color: #c9d1d9; margin-top: 3px; }
+  @media (max-width: 900px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 480px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Prompt-attack detection: Jev vs OpenAI</h1>
+      <p class="sub" id="sub">Loading…</p>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Color by">
+        <button data-mode="outcome" aria-pressed="true">Outcome</button>
+        <button data-mode="latency" aria-pressed="false">Latency</button>
+        <button data-mode="score" aria-pressed="false">Attack score</button>
+      </div>
+      <button class="primary" id="runAll">Run all</button>
+    </div>
+  </header>
+
+  <section class="grid-cards">
+    <article class="card">
+      <div class="card-head">
+        <div><h2>Ground truth</h2><div class="model-id" id="truthCounts"></div></div>
+      </div>
+      <div class="graph" id="graph-truth"></div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--truth-atk)"></span>Attack (label 1)</span>
+        <span><span class="sw" style="background:var(--truth-ben)"></span>Benign (label 0)</span>
+      </div>
+    </article>
+    <div class="grid-cards" id="cards"></div>
+  </section>
+
+  <section class="detail" id="detail"><div class="empty">Click any square to compare all three models on that sample.</div></section>
+</main>
+<div id="tip"></div>
+
+<script>
+const S = { rows: [], models: {}, results: {}, mode: "outcome", sel: null, running: {}, sources: {}, latBins: [] };
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const fmtMs = ms => ms == null ? "—" : ms >= 1000 ? (ms / 1000).toFixed(2) + "s" : Math.round(ms) + "ms";
+const pct = x => x == null || isNaN(x) ? "—" : (x * 100).toFixed(1) + "%";
+
+async function init() {
+  const st = await fetch("/api/state").then(r => r.json());
+  Object.assign(S, { rows: st.rows, models: st.models, results: st.results });
+  const atk = S.rows.filter(r => r.label === 1).length;
+  $("#sub").textContent = `${S.rows.length} samples from data.jsonl · ${st.concurrency} parallel requests per model · one square per sample`;
+  $("#truthCounts").textContent = `${atk} attacks · ${S.rows.length - atk} benign`;
+  $("#cards").innerHTML = Object.entries(S.models).map(([k, m]) => `
+    <article class="card" id="card-${k}">
+      <div class="card-head">
+        <div><h2>${esc(m.label)}</h2><div class="model-id">${esc(m.model)}</div></div>
+        <div class="card-actions">
+          <button data-run="${k}">Run</button>
+          <button data-rerun="${k}" title="Clear cached results and call the API again for every sample">Rerun</button>
+        </div>
+      </div>
+      <div class="progress" id="prog-${k}"></div>
+      <div class="graph" id="graph-${k}"></div>
+      <div class="legend" id="legend-${k}"></div>
+      <div class="stats" id="stats-${k}"></div>
+      <div class="confusion" id="conf-${k}"></div>
+    </article>`).join("");
+  for (const id of ["truth", ...Object.keys(S.models)]) buildGraph(id);
+  new ResizeObserver(layoutGraphs).observe($("#graph-truth"));
+  render();
+}
+
+// Pick a column count that divides the sample count evenly (so every graph is a full rectangle),
+// preferring the longest strip whose squares stay a readable size.
+function layoutGraphs() {
+  const n = S.rows.length, gap = 3, w = $("#graph-truth").clientWidth - 4;
+  const cellAt = cols => (w - (cols - 1) * gap) / cols;
+  const divisors = [...Array(n).keys()].map(i => i + 1).filter(c => n % c === 0);
+  const fits = divisors.filter(c => cellAt(c) >= 12 && cellAt(c) <= 28);
+  const cols = fits.length ? Math.max(...fits)
+    : divisors.reduce((best, c) => Math.abs(cellAt(c) - 18) < Math.abs(cellAt(best) - 18) ? c : best);
+  const rows = Math.ceil(n / cols);
+  document.querySelectorAll(".graph").forEach(g => { g.style.setProperty("--cols", cols); g.style.setProperty("--rows", rows); });
+}
+
+function buildGraph(key) {
+  const g = $(`#graph-${key}`);
+  g.innerHTML = S.rows.map((_, i) => `<div class="cell" data-key="${key}" data-idx="${i}"></div>`).join("");
+}
+
+// ---------- coloring ----------
+function computeLatBins() {
+  // Shared latency scale across all models so shades are comparable between graphs.
+  const all = Object.values(S.results).flatMap(r => Object.values(r)).map(x => x.latency_ms).filter(x => x != null).sort((a, b) => a - b);
+  if (!all.length) return (S.latBins = []);
+  const q = p => all[Math.min(all.length - 1, Math.floor(p * all.length))];
+  S.latBins = [q(.25), q(.5), q(.75)];
+}
+function latLevel(ms) {
+  const b = S.latBins; let lvl = 1;
+  for (const t of b) if (ms > t) lvl++;
+  return lvl;
+}
+function cellStyle(key, i) {
+  const row = S.rows[i];
+  if (key === "truth") return { bg: row.label ? "var(--truth-atk)" : "var(--truth-ben)" };
+  const r = S.results[key]?.[row.id];
+  if (!r) return { bg: null, pending: true };
+  if (r.error) return { err: true };
+  if (S.mode === "outcome") {
+    const v = r.pred === 1 ? (row.label === 1 ? "tp" : "fp") : (row.label === 1 ? "fn" : "tn");
+    return { bg: `var(--${v})` };
+  }
+  if (S.mode === "latency") return { bg: `var(--g${latLevel(r.latency_ms)})` };
+  const s = r.score ?? r.pred;
+  return { bg: s <= 0.05 ? "var(--empty)" : `var(--g${Math.min(4, 1 + Math.floor(s * 4))})` };
+}
+
+function paintGraph(key) {
+  const live = S.running[key];
+  $(`#graph-${key}`).querySelectorAll(".cell").forEach(c => {
+    const i = +c.dataset.idx, st = cellStyle(key, i);
+    c.style.background = st.err ? "" : (st.bg || "");
+    c.classList.toggle("err", !!st.err);
+    c.classList.toggle("pending-live", !!(live && st.pending));
+    c.classList.toggle("sel", S.sel === i);
+  });
+}
+
+function legendHTML() {
+  const sw = v => `<span class="sw" style="background:var(${v})"></span>`;
+  const err = `<span><span class="sw" style="background:repeating-linear-gradient(45deg,var(--err) 0 2px,transparent 2px 5px)"></span>Error</span>`;
+  if (S.mode === "outcome")
+    return `<span>${sw("--tp")}Caught attack</span><span>${sw("--tn")}Correct benign</span><span>${sw("--fp")}False alarm</span><span>${sw("--fn")}Missed attack</span>${err}`;
+  const ramp = `<span class="ramp">${[1, 2, 3, 4].map(n => sw(`--g${n}`)).join("")}</span>`;
+  if (S.mode === "latency") {
+    const b = S.latBins;
+    const range = b.length ? ` <span>(quartiles: ≤${fmtMs(b[0])} · ≤${fmtMs(b[1])} · ≤${fmtMs(b[2])} · &gt;${fmtMs(b[2])}, shared across models)</span>` : "";
+    return `<span>Fast${ramp}Slow</span>${range}${err}`;
+  }
+  return `<span>Benign${ramp}Attack</span><span>(OpenAI answers are yes/no; Jev returns a 0–1 score)</span>${err}`;
+}
+
+// ---------- stats ----------
+function stats(key) {
+  let tp = 0, tn = 0, fp = 0, fn = 0, errs = 0; const lats = [];
+  for (const row of S.rows) {
+    const r = S.results[key]?.[row.id]; if (!r) continue;
+    if (r.error) { errs++; continue; }
+    lats.push(r.latency_ms);
+    if (r.pred === 1) row.label === 1 ? tp++ : fp++; else row.label === 1 ? fn++ : tn++;
+  }
+  const n = tp + tn + fp + fn;
+  lats.sort((a, b) => a - b);
+  const q = p => lats.length ? lats[Math.min(lats.length - 1, Math.floor(p * lats.length))] : null;
+  const prec = tp + fp ? tp / (tp + fp) : null, rec = tp + fn ? tp / (tp + fn) : null;
+  return {
+    n, errs, tp, tn, fp, fn,
+    acc: n ? (tp + tn) / n : null, prec, rec,
+    f1: prec != null && rec != null && prec + rec ? 2 * prec * rec / (prec + rec) : null,
+    p50: q(.5), p95: q(.95), mean: lats.length ? lats.reduce((a, b) => a + b, 0) / lats.length : null,
+  };
+}
+
+function renderStats() {
+  const all = Object.fromEntries(Object.keys(S.models).map(k => [k, stats(k)]));
+  const keys = Object.keys(all).filter(k => all[k].n > 0);
+  const best = (f, lower) => {
+    const vals = keys.map(k => all[k][f]).filter(v => v != null);
+    if (keys.length < 2 || !vals.length) return null;
+    return lower ? Math.min(...vals) : Math.max(...vals);
+  };
+  const defs = [
+    ["Accuracy", "acc", pct, false], ["F1", "f1", pct, false], ["Precision", "prec", pct, false], ["Recall", "rec", pct, false],
+    ["Latency p50", "p50", fmtMs, true], ["Latency p95", "p95", fmtMs, true], ["Latency avg", "mean", fmtMs, true],
+    ["Errors", "errs", v => String(v), true],
+  ];
+  const bests = Object.fromEntries(defs.map(([, f, , lower]) => [f, best(f, lower)]));
+  for (const [k, s] of Object.entries(all)) {
+    $(`#stats-${k}`).innerHTML = defs.map(([label, f, fmt]) => {
+      const isBest = s.n > 0 && f !== "errs" && bests[f] != null && s[f] === bests[f];
+      return `<div class="stat${isBest ? " best" : ""}"><div class="k">${label}</div><div class="v">${s.n || f === "errs" ? fmt(s[f]) : "—"}</div></div>`;
+    }).join("");
+    $(`#conf-${k}`).textContent = s.n ? `Caught ${s.tp} · missed ${s.fn} · false alarms ${s.fp} · correct benign ${s.tn}` : "";
+    const done = s.n + s.errs, total = S.rows.length;
+    const live = S.running[k];
+    $(`#prog-${k}`).innerHTML = live
+      ? `<span class="live">● Running… ${done}/${total}</span>`
+      : done ? `${done}/${total} evaluated${s.errs ? ` · <span class="bad">${s.errs} error${s.errs === 1 ? "" : "s"}</span>` : ""}` : "Not run yet";
+    $(`#legend-${k}`).innerHTML = legendHTML();
+  }
+}
+
+function renderDetail() {
+  const el = $("#detail");
+  if (S.sel == null) return;
+  const row = S.rows[S.sel];
+  const verdicts = Object.entries(S.models).map(([k, m]) => {
+    const r = S.results[k]?.[row.id];
+    let body;
+    if (!r) body = `<span style="color:var(--muted)">Not evaluated</span>`;
+    else if (r.error) body = `<span style="color:var(--fn)">${esc(r.error)}</span>`;
+    else {
+      const right = r.pred === row.label;
+      body = `${r.pred ? "Attack" : "Benign"} <span style="color:${right ? "var(--g3)" : "var(--fn)"}">${right ? "✓ correct" : "✗ wrong"}</span><br>
+        <span style="color:var(--muted)">${fmtMs(r.latency_ms)}${k === "jev" ? ` · score ${r.score.toFixed(3)}` : ""}${r.usage ? ` · ${r.usage.input_tokens}→${r.usage.output_tokens} tok` : ""}${r.attempts > 1 ? ` · ${r.attempts} attempts` : ""}</span>`;
+    }
+    return `<div class="verdict"><b>${esc(m.label)}</b>${body}</div>`;
+  }).join("");
+  el.innerHTML = `
+    <div class="detail-head">
+      <h2>Sample #${S.sel + 1}</h2>
+      <span class="pill ${row.label ? "atk" : "ok"}">${row.label ? "Attack" : "Benign"} (label ${row.label})</span>
+      <span class="model-id">${esc(row.id)}</span>
+    </div>
+    <div class="verdicts">${verdicts}</div>
+    <pre class="text">${esc(row.text)}</pre>`;
+}
+
+function render() {
+  computeLatBins();
+  for (const k of ["truth", ...Object.keys(S.models)]) paintGraph(k);
+  renderStats();
+  renderDetail();
+  const anyRunning = Object.values(S.running).some(Boolean);
+  $("#runAll").disabled = anyRunning;
+  for (const k of Object.keys(S.models)) {
+    $(`[data-run="${k}"]`).disabled = !!S.running[k];
+    $(`[data-rerun="${k}"]`).disabled = !!S.running[k];
+  }
+}
+
+// ---------- running ----------
+let raf = 0;
+const scheduleRender = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); };
+
+function run(key, force = false) {
+  if (S.running[key]) return;
+  S.running[key] = true;
+  const es = new EventSource(`/api/run/${key}?force=${force}`);
+  S.sources[key] = es;
+  const stop = msg => {
+    es.close(); S.running[key] = false;
+    render();
+    if (msg) $(`#prog-${key}`).innerHTML = `<span class="bad">${esc(msg)}</span>`;
+  };
+  es.addEventListener("start", e => {
+    if (JSON.parse(e.data).reset) S.results[key] = {};
+    scheduleRender();
+  });
+  es.addEventListener("result", e => {
+    const r = JSON.parse(e.data);
+    (S.results[key] ||= {})[r.id] = r;
+    scheduleRender();
+  });
+  es.addEventListener("done", () => stop());
+  es.addEventListener("fatal", e => stop(JSON.parse(e.data).error));
+  es.onerror = () => { if (S.running[key]) stop("Connection lost or run already in progress — check the server log."); };
+  render();
+}
+
+document.addEventListener("click", e => {
+  const t = e.target;
+  if (t.matches("[data-mode]")) {
+    S.mode = t.dataset.mode;
+    document.querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-pressed", b === t));
+    render();
+  } else if (t.matches("[data-run]")) run(t.dataset.run);
+  else if (t.matches("[data-rerun]")) {
+    if (confirm(`Discard cached ${S.models[t.dataset.rerun].label} results and call the API again for all ${S.rows.length} samples?`)) run(t.dataset.rerun, true);
+  } else if (t.id === "runAll") Object.keys(S.models).forEach(k => run(k));
+  else if (t.classList.contains("cell")) { S.sel = +t.dataset.idx; render(); $("#detail").scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+});
+
+// ---------- tooltip ----------
+const tip = $("#tip");
+document.addEventListener("mouseover", e => {
+  const c = e.target.closest?.(".cell");
+  if (!c) { tip.classList.remove("on"); return; }
+  const i = +c.dataset.idx, key = c.dataset.key, row = S.rows[i];
+  let line = `#${i + 1} · truth: <b>${row.label ? "attack" : "benign"}</b>`;
+  if (key !== "truth") {
+    const r = S.results[key]?.[row.id];
+    line += !r ? " · not evaluated" : r.error ? " · error"
+      : ` · predicted: <b>${r.pred ? "attack" : "benign"}</b> ${r.pred === row.label ? "✓" : "✗"} · ${fmtMs(r.latency_ms)}`;
+  }
+  tip.innerHTML = `${line}<div class="snip">${esc(row.text.slice(0, 140))}${row.text.length > 140 ? "…" : ""}</div>`;
+  const rect = c.getBoundingClientRect();
+  tip.classList.add("on");
+  const w = tip.offsetWidth;
+  tip.style.left = Math.max(8, Math.min(innerWidth - w - 8, rect.left + rect.width / 2 - w / 2)) + "px";
+  tip.style.top = (rect.top - tip.offsetHeight - 8 < 0 ? rect.bottom + 8 : rect.top - tip.offsetHeight - 8) + "px";
+});
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+[project]
+name = "jev-vs-openai"
+version = "0.1.0"
+description = "Contribution-graph benchmark: Jev (TypeSafe) vs OpenAI models on prompt-attack detection"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "httpx>=0.27",
+    "openai>=1.60",
+    "python-dotenv>=1.0",
+]
